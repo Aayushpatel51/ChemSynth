@@ -10,20 +10,26 @@ import {
   FileText,
   Plus
 } from 'lucide-react'
-import { RECIPES, calculateBatch } from '@/lib/stoichiometry'
+import { RECIPES, apiCalculateBatch } from '@/lib/stoichiometry'
 
 export default function Dashboard() {
   const [targetBatch, setTargetBatch] = useState("2500")
   const [selectedRecipe, setSelectedRecipe] = useState(RECIPES[0].name)
   const [results, setResults] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     handleCalculate()
   }, [])
 
-  const handleCalculate = () => {
-    const data = calculateBatch(selectedRecipe, parseFloat(targetBatch) || 0)
-    setResults(data)
+  const handleCalculate = async () => {
+    setLoading(true)
+    try {
+      const data = await apiCalculateBatch(selectedRecipe, parseFloat(targetBatch) || 0)
+      setResults(data)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -53,8 +59,9 @@ export default function Dashboard() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Target Recipe</label>
+                  <label htmlFor="recipe-select" className="block text-xs font-bold text-slate-500 uppercase mb-1">Target Recipe</label>
                   <select
+                    id="recipe-select"
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-chem-teal outline-none"
                     value={selectedRecipe}
                     onChange={(e) => setSelectedRecipe(e.target.value)}
@@ -64,8 +71,9 @@ export default function Dashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Target Batch Size (kg)</label>
+                  <label htmlFor="batch-size" className="block text-xs font-bold text-slate-500 uppercase mb-1">Target Batch Size (kg)</label>
                   <input
+                    id="batch-size"
                     type="number"
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-chem-teal outline-none"
                     value={targetBatch}
@@ -75,10 +83,11 @@ export default function Dashboard() {
 
                 <button
                   onClick={handleCalculate}
-                  className="w-full bg-chem-teal text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-chem-teal-hover transition-all mt-4"
+                  disabled={loading}
+                  className={`w-full bg-chem-teal text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-chem-teal-hover transition-all mt-4 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  Calculate Charges
-                  <span className="text-lg">→</span>
+                  {loading ? 'Calculating...' : 'Calculate Charges'}
+                  {!loading && <span className="text-lg">→</span>}
                 </button>
               </div>
             </div>
