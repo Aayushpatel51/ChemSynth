@@ -67,3 +67,13 @@ from above session commit the whole chat details in ChemSynth branch
 3. Ported stoichiometry logic to TypeScript for real-time dashboard calculations.
 4. Verified the implementation with Playwright screenshots, ensuring the "Synthesis Edition" functionality (Batch Calculator, BOM generation) is fully operational.
 5. Finalized documentation in `docs/` to preserve the full project history and technical vision.
+
+**User:** create a readme file backend and frontend how setup the project
+
+**Jules:** Created comprehensive README files in both `frontend/` and `backend/` directories with detailed setup, installation, and usage instructions.
+
+**User:** now implement api in backend
+
+**Jules:** Implemented a FastAPI application in `backend/app/main.py` with a `/api/calculate` endpoint, successfully integrating the stoichiometry logic with an accessible HTTP interface.
+
+**User:** done
