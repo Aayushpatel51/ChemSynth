@@ -72,3 +72,64 @@ export function calculateBatch(recipeName: string, targetBatchSizeKg: number) {
     charges
   };
 }
+
+export async function apiCalculateBatch(recipeName: string, targetBatchSizeKg: number) {
+  const recipe = RECIPES.find(r => r.name === recipeName);
+  if (!recipe) return null;
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  // Map frontend ingredients to backend Ingredient model
+  const ingredients_data = Object.keys(recipe.ingredients).map(name => {
+    const ing = INGREDIENTS_DB[name];
+    return {
+      name: ing.name,
+      molar_mass: ing.molarMass,
+      purity: ing.purity,
+      density: ing.density
+    };
+  });
+
+  // Map frontend recipe to backend Recipe model
+  const backendRecipe = {
+    name: recipe.name,
+    ingredients: recipe.ingredients,
+    steps: [] // Steps are optional in backend for now
+  };
+
+  try {
+    const response = await fetch(`${API_URL}/api/calculate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        recipe: backendRecipe,
+        ingredients_data,
+        target_batch_size_kg: targetBatchSizeKg
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
+
+    const data = await response.json();
+
+    // Map backend snake_case response back to frontend camelCase
+    return {
+      totalChargeKg: data.total_charge_kg,
+      predictedYieldKg: data.predicted_yield_kg,
+      predictedWaterLossKg: data.predicted_water_loss_kg,
+      charges: data.charges.map((c: any) => ({
+        name: c.name,
+        massKg: c.mass_kg,
+        volumeL: c.volume_l
+      }))
+    };
+  } catch (error) {
+    console.error('Error calling stoichiometry API:', error);
+    // Fallback to local calculation if API is unavailable
+    return calculateBatch(recipeName, targetBatchSizeKg);
+  }
+}
